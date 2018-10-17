@@ -76,11 +76,11 @@ def parse_value(lexer, symbol=None, pos=0):
         if symbol is None:
             pos, symbol = next(lexer)
         if symbol == 'null':
-            yield ('null', None)
+            yield ('null', symbol)
         elif symbol == 'true':
-            yield ('boolean', True)
+            yield ('boolean', symbol)
         elif symbol == 'false':
-            yield ('boolean', False)
+            yield ('boolean', symbol)
         elif symbol == '[':
             for event in parse_array(lexer):
                 yield event
@@ -91,7 +91,7 @@ def parse_value(lexer, symbol=None, pos=0):
             yield ('string', parse_string(symbol))
         else:
             try:
-                yield ('number', common.number(symbol))
+                yield ('number', symbol)
             except decimal.InvalidOperation:
                 raise UnexpectedSymbol(symbol, pos)
     except StopIteration:
