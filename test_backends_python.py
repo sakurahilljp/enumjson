@@ -10,7 +10,6 @@ JSON = b'''
       "null": null,
       "boolean": false,
       "true": true,
-      "false": false,
       "integer": 0,
       "double": 0.5,
       "exponent": 1.0e+2,
@@ -30,16 +29,66 @@ JSON = b'''
 }
 '''
 
-class TestYajl2Bakend(unittest.TestCase):
+JSON_EVENTS = [
+    ('start_map', None),
+    ('map_key', 'docs'),
+    ('start_array', None),
+    ('start_map', None),
+    ('map_key', 'null'),
+    ('null', 'null'),
+    ('map_key', 'boolean'),
+    ('boolean', 'false'),
+    ('map_key', 'true'),
+    ('boolean', 'true'),
+    ('map_key', 'integer'),
+    ('number', '0'),
+    ('map_key', 'double'),
+    ('number', '0.5'),
+    ('map_key', 'exponent'),
+    ('number', '1.0e+2'),
+    ('map_key', 'long'),
+    ('number', '10000000000'),
+    ('map_key', 'string'),
+    ('string', 'строка - тест'),
+    ('end_map', None),
+    ('start_map', None),
+    ('map_key', 'meta'),
+    ('start_array', None),
+    ('start_array', None),
+    ('number', '1'),
+    ('end_array', None),
+    ('start_map', None),
+    ('end_map', None),
+    ('end_array', None),
+    ('end_map', None),
+    ('start_map', None),
+    ('map_key', 'meta'),
+    ('start_map', None),
+    ('map_key', 'key'),
+    ('string', 'value'),
+    ('end_map', None),
+    ('end_map', None),
+    ('start_map', None),
+    ('map_key', 'meta'),
+    ('null', 'null'),
+    ('end_map', None),
+    ('end_array', None),
+    ('end_map', None),
+]
+
+
+class TestPythonBakend(unittest.TestCase):
 
     def test_basic_parse(self):
-        for item in basic_parse(BytesIO(JSON)):
+        events = list(basic_parse(BytesIO(JSON)))
+        for item in events:
             print(item)
 
+        self.assertEqual(events, JSON_EVENTS)
+      
     def test_parse(self):
         for item in parse(basic_parse(BytesIO(JSON))):
             print(item)
-
 
 
 if __name__ == "__main__":
