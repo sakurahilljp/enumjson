@@ -20,18 +20,17 @@ C_LONG = CFUNCTYPE(c_int, c_void_p, c_long)
 C_DOUBLE = CFUNCTYPE(c_int, c_void_p, c_double)
 C_STR = CFUNCTYPE(c_int, c_void_p, POINTER(c_ubyte), c_uint)
 
-
 _callback_data = [
     # Mapping of JSON parser events to callback C types and value converters.
     # Used to define the Callbacks structure and actual callback functions
     # inside the parse function.
-    ('null', C_EMPTY, lambda: None),
-    ('boolean', C_INT, lambda v: bool(v)),
+    ('null', C_EMPTY, lambda: 'null'),
+    ('boolean', C_INT, lambda v: 'true' if v else 'false'),
     # "integer" and "double" aren't actually yielded by yajl since "number"
     # takes precedence if defined
-    ('integer', C_LONG, lambda v, l: int(string_at(v, l))),
-    ('double', C_DOUBLE, lambda v, l: float(string_at(v, l))),
-    ('number', C_STR, lambda v, l: common.number(b2s(string_at(v, l)))),
+    ('integer', C_LONG, lambda v, l: string_at(v, l)),
+    ('double', C_DOUBLE, lambda v, l: string_at(v, l)),
+    ('number', C_STR, lambda v, l: b2s(string_at(v, l))),
     ('string', C_STR, lambda v, l: string_at(v, l).decode('utf-8')),
     ('start_map', C_EMPTY, lambda: None),
     ('map_key', C_STR, lambda v, l: b2s(string_at(v, l))),
