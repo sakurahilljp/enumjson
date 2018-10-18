@@ -9,7 +9,7 @@ setup(
     author_email = 'sakurahilljp@gmail.com',
     url = 'https://github.com/sakurahilljp/enumjson',
     license = 'BSD',
-    description = 'Iterative JSON parser with a standard Python iterator interface',
+    description = 'Enumerate JSON element in large JSON files',
     long_description = open('README.md').read(),
 
     classifiers = [
