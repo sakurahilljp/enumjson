@@ -13,7 +13,7 @@ Top-level ``enumjson`` module exposes method from the pure Python backend. There
 also two other backends using the C library yajl in ``enumjson.backends`` that have
 the same API and are faster under CPython.
 '''
-from enumjson.common import JSONError, IncompleteJSONError, ObjectBuilder
+from enumjson.common import JSONError, IncompleteJSONError, TextBuilder
 import enumjson.backends.python as backend
 
 

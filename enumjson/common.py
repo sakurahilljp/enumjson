@@ -1,8 +1,6 @@
 '''
 Backend independent higher level interfaces, common exceptions.
 '''
-import decimal
-
 
 class JSONError(Exception):
     '''
@@ -83,49 +81,60 @@ def parse(basic_events):
 
         yield prefix, event, value
 
-
-class ObjectBuilder(object):
+class TextBuilder(object):
     '''
     Incrementally builds an object from JSON parser events. Events are passed
     into the `event` function that accepts two parameters: event type and
     value. The object being built is available at any time from the `value`
     attribute.
-
-    Example::
-
-        from StringIO import StringIO
-        from enumjson.parse import basic_parse
-        from enumjson.utils import ObjectBuilder
-
-        builder = ObjectBuilder()
-        f = StringIO('{"key": "value"})
-        for event, value in basic_parse(f):
-            builder.event(event, value)
-        print builder.value
-
     '''
     def __init__(self):
-        def initial_set(value):
-            self.value = value
-        self.containers = [initial_set]
+        self.value = ''
+        self.stack = list([['', 0],])
 
     def event(self, event, value):
-        if event == 'map_key':
-            self.key = value
-        elif event == 'start_map':
-            map = {}
-            self.containers[-1](map)
-            def setter(value):
-                map[self.key] = value
-            self.containers.append(setter)
+        if event == 'start_map':
+            self.__insert_array_separator_if_required()
+            self.value += '{'
+            self.stack.append(['map', 0])
         elif event == 'start_array':
-            array = []
-            self.containers[-1](array)
-            self.containers.append(array.append)
-        elif event == 'end_array' or event == 'end_map':
-            self.containers.pop()
+            self.__insert_array_separator_if_required()
+            self.value += '['
+            self.stack.append(['array', 0])
+        elif event == 'end_array':
+            self.value += ']'
+            self.stack.pop()
+        elif event == 'end_map':
+            self.value += '}'
+            self.stack.pop()
+        elif event == 'map_key':
+            self.__insert_map_separator_if_required()
+            value = '"{}": '.format(value)
+            self.value += value
+        elif event == 'string':
+            self.__insert_array_separator_if_required()
+            value = '"{}"'.format(value)
+            self.value += value
         else:
-            self.containers[-1](value)
+            self.__insert_array_separator_if_required()
+            self.value += value
+        
+    def __insert_array_separator_if_required(self):
+        current = self.stack[-1]
+        if current[0] == 'array':
+            if current[1] == 0:
+                current[1] += 1
+            else:
+                self.value += ', '
+
+    def __insert_map_separator_if_required(self):
+        current = self.stack[-1]
+        if current[0] == 'map':
+            if current[1] == 0:
+                current[1] += 1
+            else:
+                self.value += ', '
+    
 
 def items(prefixed_events, prefix):
     '''
@@ -138,24 +147,15 @@ def items(prefixed_events, prefix):
             current, event, value = next(prefixed_events)
             if current == prefix:
                 if event in ('start_map', 'start_array'):
-                    builder = ObjectBuilder()
+                    builder = TextBuilder()
                     end_event = event.replace('start', 'end')
                     while (current, event) != (prefix, end_event):
                         builder.event(event, value)
                         current, event, value = next(prefixed_events)
+                    
+                    builder.event(event, value)
                     yield builder.value
                 else:
                     yield value
     except StopIteration:
         pass
-
-
-def number(str_value):
-    '''
-    Converts string with a numeric value into an int or a Decimal.
-    Used in different backends for consistent number representation.
-    '''
-    number = decimal.Decimal(str_value)
-    if not ('.' in str_value or 'e' in str_value or 'E' in str_value):
-        number = int(number)
-    return number
