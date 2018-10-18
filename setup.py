@@ -10,7 +10,7 @@ setup(
     url = 'https://github.com/sakurahilljp/enumjson',
     license = 'BSD',
     description = 'Iterative JSON parser with a standard Python iterator interface',
-    long_description = open('README.rst').read(),
+    long_description = open('README.md').read(),
 
     classifiers = [
         'Development Status :: 5 - Production/Stable',
