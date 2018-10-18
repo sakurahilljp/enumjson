@@ -89,53 +89,39 @@ class TextBuilder(object):
     attribute.
     '''
     def __init__(self):
-        self.value = ''
-        self.stack = list([['', 0],])
+        self.containers = []
+        self.keys = []
+        c = []
+        self.containers.append((c, c.append))
+
+    @property
+    def value(self):
+        return self.containers[0][0][0]
 
     def event(self, event, value):
-        if event == 'start_map':
-            self.__insert_array_separator_if_required()
-            self.value += '{'
-            self.stack.append(['map', 0])
-        elif event == 'start_array':
-            self.__insert_array_separator_if_required()
-            self.value += '['
-            self.stack.append(['array', 0])
-        elif event == 'end_array':
-            self.value += ']'
-            self.stack.pop()
-        elif event == 'end_map':
-            self.value += '}'
-            self.stack.pop()
-        elif event == 'map_key':
-            self.__insert_map_separator_if_required()
-            value = '"{}": '.format(value)
-            self.value += value
-        elif event == 'string':
-            self.__insert_array_separator_if_required()
+        if event == 'string' or event == 'map_key':
             value = '"{}"'.format(value)
-            self.value += value
+
+        if event == 'start_map':
+            c = []
+            def setter(value):
+                c.append('{}: {}'.format(self.keys.pop(), value))
+            self.containers.append((c, setter))
+
+        elif event == 'start_array':
+            c = []
+            self.containers.append((c, c.append))
+        elif event == 'end_array':
+            c, _ = self.containers.pop()
+            self.containers[-1][1]('[{}]'.format(', '.join(c)))
+        elif event == 'end_map':
+            c, _ = self.containers.pop()
+            self.containers[-1][1]('{{{}}}'.format(', '.join(c))) 
+        elif event == 'map_key':
+            self.keys.append(value)
         else:
-            self.__insert_array_separator_if_required()
-            self.value += value
+            self.containers[-1][1](value)
         
-    def __insert_array_separator_if_required(self):
-        current = self.stack[-1]
-        if current[0] == 'array':
-            if current[1] == 0:
-                current[1] += 1
-            else:
-                self.value += ', '
-
-    def __insert_map_separator_if_required(self):
-        current = self.stack[-1]
-        if current[0] == 'map':
-            if current[1] == 0:
-                current[1] += 1
-            else:
-                self.value += ', '
-    
-
 def items(prefixed_events, prefix):
     '''
     An iterator returning native Python objects constructed from the events
