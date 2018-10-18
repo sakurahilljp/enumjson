@@ -17,7 +17,7 @@ from enumjson.common import JSONError, IncompleteJSONError, TextBuilder
 import enumjson.backends.python as backend
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 basic_parse = backend.basic_parse
