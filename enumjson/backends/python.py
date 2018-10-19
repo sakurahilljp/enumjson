@@ -87,13 +87,10 @@ def parse_value(lexer, symbol=None, pos=0):
         elif symbol == '{':
             for event in parse_object(lexer):
                 yield event
-        elif symbol[0] == '"':
-            yield ('string', parse_string(symbol))
+        elif symbol.startswith('"'):
+            yield ('string', symbol)
         else:
-            try:
-                yield ('number', symbol)
-            except decimal.InvalidOperation:
-                raise UnexpectedSymbol(symbol, pos)
+            yield ('number', symbol)
     except StopIteration:
         raise common.IncompleteJSONError('Incomplete JSON data')
 
@@ -129,7 +126,7 @@ def parse_object(lexer):
             while True:
                 if symbol[0] != '"':
                     raise UnexpectedSymbol(symbol, pos)
-                yield ('map_key', parse_string(symbol))
+                yield ('map_key', symbol)
                 pos, symbol = next(lexer)
                 if symbol != ':':
                     raise UnexpectedSymbol(symbol, pos)

@@ -2,6 +2,7 @@
 Backend independent higher level interfaces, common exceptions.
 '''
 
+
 class JSONError(Exception):
     '''
     Base exception for all parsing errors.
@@ -23,7 +24,7 @@ def parse(basic_events):
 
     Available types and values are:
 
-    ('null', None)
+     ('null', None)
     ('boolean', <True or False>)
     ('number', <int or Decimal>)
     ('string', <unicode>)
@@ -63,7 +64,7 @@ def parse(basic_events):
     for event, value in basic_events:
         if event == 'map_key':
             prefix = '.'.join(path[:-1])
-            path[-1] = value
+            path[-1] = value[1:-1]  # strip ""
         elif event == 'start_map':
             prefix = '.'.join(path)
             path.append(None)
@@ -76,10 +77,11 @@ def parse(basic_events):
         elif event == 'end_array':
             path.pop()
             prefix = '.'.join(path)
-        else: # any scalar value
+        else:  # any scalar value
             prefix = '.'.join(path)
 
         yield prefix, event, value
+
 
 class TextBuilder(object):
     '''
@@ -88,6 +90,7 @@ class TextBuilder(object):
     value. The object being built is available at any time from the `value`
     attribute.
     '''
+
     def __init__(self):
         self.containers = []
         self.keys = []
@@ -99,29 +102,30 @@ class TextBuilder(object):
         return self.containers[0][0][0]
 
     def event(self, event, value):
-        if event == 'string' or event == 'map_key':
-            value = '"{}"'.format(value)
+        #print('>>>', event, repr(value))
 
         if event == 'start_map':
             c = []
-            def setter(value):
-                c.append('{}: {}'.format(self.keys.pop(), value))
-            self.containers.append((c, setter))
 
+            def setter(value):
+                #c.append(''.join([self.keys.pop(), ': ', value]))
+                c.append(self.keys.pop() + ': ' + value)
+            self.containers.append((c, setter))
         elif event == 'start_array':
             c = []
             self.containers.append((c, c.append))
         elif event == 'end_array':
             c, _ = self.containers.pop()
-            self.containers[-1][1]('[{}]'.format(', '.join(c)))
+            self.containers[-1][1](''.join(['[', ', '.join(c), ']']))
         elif event == 'end_map':
             c, _ = self.containers.pop()
-            self.containers[-1][1]('{{{}}}'.format(', '.join(c))) 
+            self.containers[-1][1](''.join(['{', ', '.join(c), '}']))
         elif event == 'map_key':
             self.keys.append(value)
         else:
             self.containers[-1][1](value)
-        
+
+
 def items(prefixed_events, prefix):
     '''
     An iterator returning native Python objects constructed from the events
@@ -138,7 +142,7 @@ def items(prefixed_events, prefix):
                     while (current, event) != (prefix, end_event):
                         builder.event(event, value)
                         current, event, value = next(prefixed_events)
-                    
+
                     builder.event(event, value)
                     yield builder.value
                 else:
