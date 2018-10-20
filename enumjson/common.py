@@ -64,7 +64,7 @@ def parse(basic_events):
     for event, value in basic_events:
         if event == 'map_key':
             prefix = '.'.join(path[:-1])
-            path[-1] = value[1:-1]  # strip ""
+            path[-1] = value
         elif event == 'start_map':
             prefix = '.'.join(path)
             path.append(None)
@@ -106,7 +106,6 @@ class TextBuilder(object):
 
         if event == 'start_map':
             c = []
-
             def setter(value):
                 #c.append(''.join([self.keys.pop(), ': ', value]))
                 c.append(self.keys.pop() + ': ' + value)
@@ -121,7 +120,9 @@ class TextBuilder(object):
             c, _ = self.containers.pop()
             self.containers[-1][1](''.join(['{', ', '.join(c), '}']))
         elif event == 'map_key':
-            self.keys.append(value)
+            self.keys.append('"' + value + '"')
+        elif event == 'string':
+            self.containers[-1][1]('"' + value + '"')
         else:
             self.containers[-1][1](value)
 

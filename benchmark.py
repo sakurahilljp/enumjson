@@ -1,8 +1,8 @@
 
 import time
-import ijson
+import ijson.backends.yajl2 as ijson
 import json
-import enumjson.backends.python as enumjson
+import enumjson.backends.yajl2 as enumjson
 
 def measure(func):
     def wrapper(*args, **kargs):
@@ -20,7 +20,7 @@ def benchmarkenumjson(path):
     with open(path, 'rb') as f:
         x = None
         for item in enumjson.items(f, 'Postal.item'):
-           x = json.loads(item)
+           x = item
         #print(type(x), x)
 
 @measure
